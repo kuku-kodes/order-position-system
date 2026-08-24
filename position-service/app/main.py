@@ -1,8 +1,12 @@
 from fastapi import FastAPI
-from app.models import OrderEvent
-from app.service import process_order, get_all_positions
 
-app = FastAPI(title="Position Maintaining Service")
+from app.models import OrderEvent
+from app.service import get_all_positions, process_order
+
+
+app = FastAPI(
+    title="Position Maintaining Service"
+)
 
 
 @app.get("/health")
@@ -15,7 +19,10 @@ def receive_event(event: OrderEvent):
 
     status = process_order(event)
 
-    return {"status": status}
+    return {
+        "status": status,
+        "event_id": event.event_id,
+    }
 
 
 @app.get("/position")

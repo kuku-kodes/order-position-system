@@ -16,3 +16,9 @@ Two-service order processing system that reads order updates from CSV and mainta
 - pytest
 - Docker
 - Docker Compose
+
+## Testing
+
+The project contains unit tests for validation, position calculations, duplicate event handling, CSV processing, rate limiting, and HTTP delivery.
+
+An end-to-end test also starts the Position Maintaining Service and verifies communication over HTTP.

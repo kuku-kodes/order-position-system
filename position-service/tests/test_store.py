@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from app.store import PositionStore
 from app.models import OrderEvent
 
@@ -39,3 +41,29 @@ def test_sell_decreases_position():
     )
 
     assert store.get_positions()["ABC"] == 60
+
+def test_concurrent_updates():
+
+    store = PositionStore()
+
+    def add_event(index):
+
+        event = OrderEvent(
+            event_id=f"concurrent-{index}",
+            symbol="RELIANCE",
+            transaction_type="BUY",
+            quantity=1,
+        )
+
+        store.process_event(event)
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+
+        executor.map(
+            add_event,
+            range(100),
+        )
+
+    positions = store.get_positions()
+
+    assert positions["RELIANCE"] == 100    
