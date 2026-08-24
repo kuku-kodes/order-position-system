@@ -34,36 +34,46 @@ class EventSender:
                     timeout=self.timeout,
                 )
 
-                response.raise_for_status()
+                if 200 <= response.status_code < 300:
+                    return True
 
-                return True
+                if 400 <= response.status_code < 500:
 
-            except httpx.HTTPError as error:
-
-                if attempt == self.max_retries:
-                    # print(
-                    #     f"ERROR failed to send "
-                    #     f"event_id={event.event_id}: {error}"
-                    # )
                     logger.error(
-                            "Failed to send event_id=%s: %s",
-                            event.event_id,
-                            error,
-                        )
+                        "Permanent HTTP error for event_id=%s "
+                        "status=%d response=%s",
+                        event.event_id,
+                        response.status_code,
+                        response.text,
+                    )
 
                     return False
 
-                # print(
-                #     f"WARNING retrying event_id="
-                #     f"{event.event_id}, "
-                #     f"attempt={attempt}"
-                # )
                 logger.warning(
-                            "Retrying event_id=%s attempt=%d",
-                            event.event_id,
-                            attempt,
-                        )
+                    "Server error for event_id=%s "
+                    "status=%d attempt=%d",
+                    event.event_id,
+                    response.status_code,
+                    attempt,
+                )
 
+            except httpx.RequestError as error:
+
+                logger.warning(
+                    "Connection error for event_id=%s "
+                    "attempt=%d: %s",
+                    event.event_id,
+                    attempt,
+                    error,
+                )
+
+            if attempt < self.max_retries:
                 time.sleep(0.5)
+
+        logger.error(
+            "Failed to deliver event_id=%s after %d attempts",
+            event.event_id,
+            self.max_retries,
+        )
 
         return False
