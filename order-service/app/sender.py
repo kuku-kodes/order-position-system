@@ -1,9 +1,11 @@
 import time
 
 import httpx
+import logging
 
 from app.models import OrderEvent
 
+logger = logging.getLogger(__name__)
 
 class EventSender:
 
@@ -39,18 +41,28 @@ class EventSender:
             except httpx.HTTPError as error:
 
                 if attempt == self.max_retries:
-                    print(
-                        f"ERROR failed to send "
-                        f"event_id={event.event_id}: {error}"
-                    )
+                    # print(
+                    #     f"ERROR failed to send "
+                    #     f"event_id={event.event_id}: {error}"
+                    # )
+                    logger.error(
+                            "Failed to send event_id=%s: %s",
+                            event.event_id,
+                            error,
+                        )
 
                     return False
 
-                print(
-                    f"WARNING retrying event_id="
-                    f"{event.event_id}, "
-                    f"attempt={attempt}"
-                )
+                # print(
+                #     f"WARNING retrying event_id="
+                #     f"{event.event_id}, "
+                #     f"attempt={attempt}"
+                # )
+                logger.warning(
+                            "Retrying event_id=%s attempt=%d",
+                            event.event_id,
+                            attempt,
+                        )
 
                 time.sleep(0.5)
 
