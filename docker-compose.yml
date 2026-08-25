@@ -1,0 +1,42 @@
+services:
+
+  position-service:
+    build:
+      context: .
+      dockerfile: position-service/Dockerfile
+
+    environment:
+      POSITION_SERVICE_HOST: 0.0.0.0
+      POSITION_SERVICE_PORT: 8000
+
+    ports:
+      - "8000:8000"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+
+    environment:
+      INPUT_FILE: /app/data/order_updates.csv
+      POSITION_SERVICE_URL: http://position-service:8000
+      MAX_EVENTS_PER_SECOND: 50
+      REQUEST_TIMEOUT: 5
+      MAX_RETRIES: 3
+
+    depends_on:
+      position-service:
+        condition: service_healthy
